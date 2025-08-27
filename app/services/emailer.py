@@ -29,7 +29,7 @@ async def send_qr_email(
     )
 
     await aiosmtplib.send(
-        message=msg,
+        msg,
         hostname=settings.SMTP_HOST,
         port=settings.SMTP_PORT,
         username=settings.SMTP_USERNAME,
