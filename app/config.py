@@ -15,7 +15,8 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_TLS: bool = True
-    MAIL_FROM: str = ""
+    # Dirección de correo que enviará los QR
+    MAIL_FROM: str = "jon.echeverriasanmillan@osakidetza.eus"
     MAIL_FROM_NAME: str = "QR Access Control"
 
     @field_validator("CORS_ORIGINS", mode="before")

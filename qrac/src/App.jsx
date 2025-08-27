@@ -76,6 +76,18 @@ export default function App() {
     }
   }
 
+  async function sendQR(guestId) {
+    setBusy(true);
+    try {
+      await getJSON(`${API}/guests/${guestId}/resend`, { method: "POST" });
+      setMsg("QR enviado por email ✅");
+    } catch (err) {
+      setMsg(`Error enviando QR: ${err.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="container">
       <h1>QR Access Control — Front</h1>
@@ -135,7 +147,10 @@ export default function App() {
                 <b>{g.name}</b> — {g.email} · token: <code>{g.token}</code>{" "}
                 <a href={`${API}/guests/qr/${g.id}.png`} target="_blank" rel="noreferrer">
                   Ver QR
-                </a>
+                </a>{" "}
+                <button onClick={() => sendQR(g.id)} disabled={busy}>
+                  Enviar QR por email
+                </button>
               </li>
             ))}
           </ul>
