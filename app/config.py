@@ -1,5 +1,5 @@
-﻿from typing import List, Optional, Union
-from pydantic import AnyHttpUrl
+from typing import List, Optional, Union
+from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -7,7 +7,7 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "QR Access Control API"
     DATABASE_URL: str = "sqlite:///./qrac.db"
-    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    CORS_ORIGINS: Union[List[str], str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
     QR_BASE_URL: Optional[Union[AnyHttpUrl, str]] = None
 
     SMTP_HOST: str = ""
@@ -15,15 +15,15 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_TLS: bool = True
-    MAIL_FROM: str = ""
+    # Dirección de correo que enviará los QR
+    MAIL_FROM: str = "jon.echeverriasanmillan@osakidetza.eus"
     MAIL_FROM_NAME: str = "QR Access Control"
 
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def _assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin]
+        return v
+
 settings = Settings()
-
-
-
-
-
-
-
-

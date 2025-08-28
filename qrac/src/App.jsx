@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
+import "./App.css";
 
-const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3000";
+const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 export default function App() {
   const [health, setHealth] = useState("checking…");
@@ -27,6 +28,8 @@ export default function App() {
   const loadGuests = (eventId) =>
     getJSON(`${API}/guests/?event_id=${eventId}`).then(setGuests);
 
+  // load initial data
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadHealth(); loadEvents(); }, []);
 
   async function createEvent(e) {
@@ -73,25 +76,39 @@ export default function App() {
     }
   }
 
-  return (
-    <div style={{ maxWidth: 900, margin: "40px auto", fontFamily: "system-ui, sans-serif" }}>
-      <h1>QR Access Control — Front</h1>
-      <p>API: {API} | health: <b>{health}</b></p>
+  async function sendQR(guestId) {
+    setBusy(true);
+    try {
+      await getJSON(`${API}/guests/${guestId}/resend`, { method: "POST" });
+      setMsg("QR enviado por email ✅");
+    } catch (err) {
+      setMsg(`Error enviando QR: ${err.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
 
-      <section style={{ padding: 16, border: "1px solid #eee", borderRadius: 12, marginBottom: 16 }}>
+  return (
+    <div className="container">
+      <h1>QR Access Control — Front</h1>
+      <p>
+        API: {API} | health: <b>{health}</b>
+      </p>
+
+      <section className="section">
         <h2>Eventos</h2>
-        <form onSubmit={createEvent} style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <form onSubmit={createEvent} className="form">
           <input
             placeholder="Nombre del evento"
             value={newEvent}
             onChange={(e) => setNewEvent(e.target.value)}
-            style={{ flex: 1, padding: 8 }}
+            className="input"
           />
-          <button disabled={busy}>Crear</button>
+          <button className="button" disabled={busy}>Crear</button>
         </form>
-        <ul>
-          {events.map(ev => (
-            <li key={ev.id} style={{ marginBottom: 6 }}>
+        <ul className="events-list">
+          {events.map((ev) => (
+            <li key={ev.id}>
               <button onClick={() => { setSelectedEvent(ev); loadGuests(ev.id); }}>
                 Seleccionar
               </button>{" "}
@@ -102,38 +119,49 @@ export default function App() {
       </section>
 
       {selectedEvent && (
-        <section style={{ padding: 16, border: "1px solid #eee", borderRadius: 12, marginBottom: 16 }}>
-          <h2>Invitados — Evento #{selectedEvent.id} · {selectedEvent.name}</h2>
+        <section className="section">
+          <h2>
+            Invitados — Evento #{selectedEvent.id} · {selectedEvent.name}
+          </h2>
 
-          <form onSubmit={createGuest} style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <form onSubmit={createGuest} className="form">
             <input
               placeholder="Nombre"
               value={guestForm.name}
               onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })}
-              style={{ flex: 1, padding: 8 }}
+              className="input"
             />
             <input
               placeholder="Email"
               value={guestForm.email}
               onChange={(e) => setGuestForm({ ...guestForm, email: e.target.value })}
-              style={{ flex: 1, padding: 8 }}
+              className="input"
               type="email"
             />
-            <button disabled={busy}>Añadir invitado</button>
+            <button className="button" disabled={busy}>Añadir invitado</button>
           </form>
 
-          <ul>
-            {guests.map(g => (
-              <li key={g.id} style={{ marginBottom: 8 }}>
+          <ul className="guest-list">
+            {guests.map((g) => (
+              <li key={g.id}>
                 <b>{g.name}</b> — {g.email} · token: <code>{g.token}</code>{" "}
-                <a href={`${API}/guests/qr/${g.id}.png`} target="_blank" rel="noreferrer">Ver QR</a>
+                <a href={`${API}/guests/qr/${g.id}.png`} target="_blank" rel="noreferrer">
+                  Ver QR
+                </a>{" "}
+                <button onClick={() => sendQR(g.id)} disabled={busy}>
+                  Enviar QR por email
+                </button>
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      {msg && <p><i>{msg}</i></p>}
+      {msg && (
+        <p>
+          <i>{msg}</i>
+        </p>
+      )}
     </div>
   );
 }
