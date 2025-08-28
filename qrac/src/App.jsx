@@ -10,6 +10,7 @@ export default function App() {
   const [guests, setGuests] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [guestForm, setGuestForm] = useState({ name: "", email: "" });
+  const [csvFile, setCsvFile] = useState(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -88,6 +89,30 @@ export default function App() {
     }
   }
 
+  async function importGuests(e) {
+    e.preventDefault();
+    if (!selectedEvent || !csvFile) return;
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", csvFile);
+      await fetch(`${API}/guests/import?event_id=${selectedEvent.id}`, {
+        method: "POST",
+        body: fd,
+      }).then((r) => {
+        if (!r.ok) throw new Error("import failed");
+        return r.json();
+      });
+      await loadGuests(selectedEvent.id);
+      setCsvFile(null);
+      setMsg("Invitados importados ✅");
+    } catch (err) {
+      setMsg(`Error importando invitados: ${err.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="container">
       <h1>QR Access Control — Front</h1>
@@ -139,6 +164,11 @@ export default function App() {
               type="email"
             />
             <button className="button" disabled={busy}>Añadir invitado</button>
+          </form>
+
+          <form onSubmit={importGuests} className="form">
+            <input type="file" accept=".csv" onChange={(e) => setCsvFile(e.target.files[0])} />
+            <button className="button" disabled={busy || !csvFile}>Importar CSV</button>
           </form>
 
           <ul className="guest-list">
